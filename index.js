@@ -32,6 +32,7 @@ export async function runStableAPIConnect() {
     const userCollection = db.collection('users');
     const doctorsCollection = db.collection('doctors');
     const reviewsCollection = db.collection('reviews');
+    const appointmentCollection = db.collection('appointment');
 
     app.post('/signup', async (req, res) => {
       const document = {
@@ -113,6 +114,30 @@ export async function runStableAPIConnect() {
           success: false,
           message: 'Internal server error',
         });
+      }
+    });
+
+    // Booking Doctors
+    app.post('/booking', async (req, res) => {
+      try {
+        const document = {
+          doctorId: new ObjectId(req.body.doctorId),
+          userId: new ObjectId(req.body.userId),
+          name: req.body.name,
+          gender: req.body.gender,
+          phone: req.body.phone,
+          email: req.body.email,
+          date: new Date(req.body.date),
+          time: req.body.time,
+          details: req.body.details,
+        };
+
+       const result = await appointmentCollection.insertOne(document);
+
+       res.send(result)
+
+      } catch (error) {
+        console.log(error);
       }
     });
 
