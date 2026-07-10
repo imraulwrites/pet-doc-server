@@ -29,7 +29,7 @@ export async function runStableAPIConnect() {
     // console.log('Pinged your deployment. You successfully connected to MongoDB!');
 
     const db = client.db('petdoc');
-    const userCollection = db.collection('users');
+    const userCollection = db.collection('user');
     const doctorsCollection = db.collection('doctors');
     const reviewsCollection = db.collection('reviews');
     const appointmentCollection = db.collection('appointment');
@@ -140,6 +140,19 @@ export async function runStableAPIConnect() {
       }
     });
 
+    // get User Information
+    app.get('/user/:id', async (req, res) => {
+      // console.log("check userid", await req.params.id)
+      const userId = await req.params.id;
+      try {
+        const result = await userCollection.findOne({ _id: new ObjectId(req.params.id) });
+        // console.log("user data in route", result)
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
     // get My Bookings in my profile
 
     app.get('/my-bookings/:userId', async (req, res) => {
@@ -154,31 +167,31 @@ export async function runStableAPIConnect() {
             },
             {
               $lookup: {
-                from: "doctors",
-                localField: "doctorId",
-                foreignField: "_id",
-                as: "doctor"
-              }
-            }, {
-              $unwind: "$doctor"
+                from: 'doctors',
+                localField: 'doctorId',
+                foreignField: '_id',
+                as: 'doctor',
+              },
+            },
+            {
+              $unwind: '$doctor',
             },
             {
               $project: {
-                doctorName: "$doctor.name",
-                specialty: "$doctor.specialty",
-                hospital: "$doctor.hospital",
-                fee: "$doctor.fee",
-                doctorImage: "$doctor.image",
+                doctorName: '$doctor.name',
+                specialty: '$doctor.specialty',
+                hospital: '$doctor.hospital',
+                fee: '$doctor.fee',
+                doctorImage: '$doctor.image',
                 name: 1,
                 time: 1,
                 date: 1,
-
-              }
-            }
+              },
+            },
           ])
           .toArray();
 
-        console.log(`result from appointment`, result);
+        // console.log(`result from appointment`, result);
 
         res.send(result);
       } catch (error) {
