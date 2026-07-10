@@ -132,12 +132,57 @@ export async function runStableAPIConnect() {
           details: req.body.details,
         };
 
-       const result = await appointmentCollection.insertOne(document);
+        const result = await appointmentCollection.insertOne(document);
 
-       res.send(result)
-
+        res.send(result);
       } catch (error) {
         console.log(error);
+      }
+    });
+
+    // get My Bookings in my profile
+
+    app.get('/my-bookings/:userId', async (req, res) => {
+      // console.log('params userid', await req.params.userId);
+      try {
+        const result = await appointmentCollection
+          .aggregate([
+            {
+              $match: {
+                userId: new ObjectId(req.params.userId),
+              },
+            },
+            {
+              $lookup: {
+                from: "doctors",
+                localField: "doctorId",
+                foreignField: "_id",
+                as: "doctor"
+              }
+            }, {
+              $unwind: "$doctor"
+            },
+            {
+              $project: {
+                doctorName: "$doctor.name",
+                specialty: "$doctor.specialty",
+                hospital: "$doctor.hospital",
+                fee: "$doctor.fee",
+                doctorImage: "$doctor.image",
+                name: 1,
+                time: 1,
+                date: 1,
+
+              }
+            }
+          ])
+          .toArray();
+
+        console.log(`result from appointment`, result);
+
+        res.send(result);
+      } catch (error) {
+        console.log('error from server my-bookings route', error);
       }
     });
 
