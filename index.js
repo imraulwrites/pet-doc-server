@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { MongoClient, ObjectId, ServerApiVersion } from 'mongodb';
+import { requireAuth } from './middleware/requireAuth.js';
 
 const app = express();
 
@@ -49,6 +50,7 @@ export async function runStableAPIConnect() {
       res.send(newUser);
     });
 
+    // all doctors list
     app.get('/all-appointments', async (req, res) => {
       const doctors = await doctorsCollection.find({}).toArray();
 
@@ -56,18 +58,19 @@ export async function runStableAPIConnect() {
       res.send(doctors);
     });
 
+    // Details for each Doctors
     app.get('/details/:id', async (req, res) => {
       // console.log('req received', req.params.id);
       const details = await doctorsCollection.findOne({ _id: new ObjectId(req.params.id) });
 
-      console.log('details for each doctor', details);
+      // console.log('details for each doctor', details);
 
       res.send(details);
     });
 
     // reviews
 
-    app.post('/reviews', async (req, res) => {
+    app.post('/reviews', requireAuth, async (req, res) => {
       const document = {
         doctorId: new ObjectId(req.body.doctorId),
         userId: new ObjectId(req.body.userId),
@@ -118,7 +121,7 @@ export async function runStableAPIConnect() {
     });
 
     // Booking Doctors
-    app.post('/booking', async (req, res) => {
+    app.post('/booking',  requireAuth, async (req, res) => {
       try {
         const document = {
           doctorId: new ObjectId(req.body.doctorId),
@@ -141,7 +144,7 @@ export async function runStableAPIConnect() {
     });
 
     // get User Information
-    app.get('/user/:id', async (req, res) => {
+    app.get('/user/:id', requireAuth,async (req, res) => {
       // console.log("check userid", await req.params.id)
       const userId = await req.params.id;
       try {
@@ -155,7 +158,7 @@ export async function runStableAPIConnect() {
 
     // get My Bookings in my profile
 
-    app.get('/my-bookings/:userId', async (req, res) => {
+    app.get('/my-bookings/:userId', requireAuth, async (req, res) => {
       // console.log('params userid', await req.params.userId);
       try {
         const result = await appointmentCollection
@@ -191,7 +194,7 @@ export async function runStableAPIConnect() {
           ])
           .toArray();
 
-        // console.log(`result from appointment`, result);
+        console.log(`result from appointment`, result);
 
         res.send(result);
       } catch (error) {
