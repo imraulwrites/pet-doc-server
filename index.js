@@ -25,10 +25,6 @@ export async function runStableAPIConnect() {
     // Connect the client to the server (optional starting in v4.7)
     await client.connect();
 
-    // // Send a ping to confirm a successful connection
-    // const result = await client.db('petdoc').command({ ping: 1 });
-    // console.log('Pinged your deployment. You successfully connected to MongoDB!');
-
     const db = client.db('petdoc');
     const userCollection = db.collection('user');
     const doctorsCollection = db.collection('doctors');
@@ -39,11 +35,9 @@ export async function runStableAPIConnect() {
       const document = {
         name: req.body.name,
         email: req.body.email,
-        // password: req.body.password,
-        // photoURL: req.body.photoURL,
+
       };
 
-      // console.log('first');
 
       const newUser = await userCollection.insertOne(document);
 
@@ -68,9 +62,10 @@ export async function runStableAPIConnect() {
       res.send(details);
     });
 
-    // reviews
+    // post doctor reviews
 
     app.post('/reviews', requireAuth, async (req, res) => {
+      // console.log('passed requireAuth');
       const document = {
         doctorId: new ObjectId(req.body.doctorId),
         userId: new ObjectId(req.body.userId),
@@ -120,8 +115,8 @@ export async function runStableAPIConnect() {
       }
     });
 
-    // Booking Doctors
-    app.post('/booking',  requireAuth, async (req, res) => {
+    // Booking Doctors appointment
+    app.post('/booking', requireAuth, async (req, res) => {
       try {
         const document = {
           doctorId: new ObjectId(req.body.doctorId),
@@ -144,7 +139,7 @@ export async function runStableAPIConnect() {
     });
 
     // get User Information
-    app.get('/user/:id', requireAuth,async (req, res) => {
+    app.get('/user/:id', requireAuth, async (req, res) => {
       // console.log("check userid", await req.params.id)
       const userId = await req.params.id;
       try {
@@ -156,8 +151,7 @@ export async function runStableAPIConnect() {
       }
     });
 
-    // get My Bookings in my profile
-
+    // get My Bookings / appointments in my profile
     app.get('/my-bookings/:userId', requireAuth, async (req, res) => {
       // console.log('params userid', await req.params.userId);
       try {
@@ -186,6 +180,7 @@ export async function runStableAPIConnect() {
                 hospital: '$doctor.hospital',
                 fee: '$doctor.fee',
                 doctorImage: '$doctor.image',
+                availability: '$doctor.availability',
                 name: 1,
                 time: 1,
                 date: 1,
@@ -194,7 +189,7 @@ export async function runStableAPIConnect() {
           ])
           .toArray();
 
-        console.log(`result from appointment`, result);
+        // console.log(`result from appointment`, result);
 
         res.send(result);
       } catch (error) {
@@ -202,7 +197,67 @@ export async function runStableAPIConnect() {
       }
     });
 
-    // top doctors
+    // update my bookings / appointment
+    app.post('/my-bookings/update', requireAuth, async (req, res) => {
+      try {
+        const result = await appointmentCollection.updateOne(
+          { _id: new ObjectId(req.body.appointmentId) },
+          {
+            $set: {
+              time: req.body.time,
+              date: new Date(req.body.date),
+            },
+          }
+        );
+
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({
+          message: 'Failed to update appointment',
+          error: error.message,
+        });
+      }
+    });
+
+    // delete an appointment
+    app.delete(`/delete/:appointmentId`, requireAuth, async (req, res) => {
+      const { appointmentId } = await req.params;
+
+      // console.log('check param id', await req.params)
+
+      if (!ObjectId.isValid(appointmentId)) {
+        return res.status(400).send({
+          message: 'Invalid request',
+        });
+      }
+      try {
+        const result = await appointmentCollection.deleteOne({
+          _id: new ObjectId(appointmentId),
+        });
+
+        // console.log('result from delete', result);
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({
+            message: 'Booking not found',
+          });
+        }
+
+        res.send({
+          message: 'Booking deleted successfully',
+          deletedCount: result.deletedCount,
+        });
+      } catch (error) {
+        console.error(error);
+
+        res.status(500).send({
+          message: 'Failed to delete booking',
+        });
+      }
+    });
+
+    // get top doctors
 
     app.get('/top-doctors', async (req, res) => {
       try {
