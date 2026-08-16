@@ -1,6 +1,6 @@
 import * as jose from 'jose-cjs';
 
-const JWKS = jose.createRemoteJWKSet(new URL('http://localhost:3000/api/auth/jwks'));
+const JWKS = jose.createRemoteJWKSet(new URL(`${process.env.NEXT_APP_URI}/api/auth/jwks`));
 
 export async function requireAuth(req, res, next) {
   try {
