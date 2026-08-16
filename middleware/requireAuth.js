@@ -1,4 +1,4 @@
-import * as jose from 'jose';
+import * as jose from 'jose-cjs';
 
 const JWKS = jose.createRemoteJWKSet(new URL('http://localhost:3000/api/auth/jwks'));
 
