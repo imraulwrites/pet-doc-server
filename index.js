@@ -10,9 +10,7 @@ app.use(express.json());
 
 const port = process.env.PORT || 8000;
 
-const uri = `mongodb+srv://basicUser:BIoBEqO9IV8tsxTE@cluster0.iaswwa9.mongodb.net/?appName=Cluster0`;
-
-const client = new MongoClient(uri, {
+const client = new MongoClient(process.env.MONGODB_URI, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
@@ -35,9 +33,7 @@ export async function runStableAPIConnect() {
       const document = {
         name: req.body.name,
         email: req.body.email,
-
       };
-
 
       const newUser = await userCollection.insertOne(document);
 
@@ -289,6 +285,6 @@ app.get('/', (req, res) => {
   res.send('Response from Server');
 });
 
-app.listen(port, (req, res) => {
+app.listen(port, '0.0.0.0', (req, res) => {
   console.log(`Successfully connected to port: ${port}`);
 });
